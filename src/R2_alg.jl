@@ -279,7 +279,7 @@ function R2(reg_nlp::AbstractRegularizedNLPModel; kwargs...)
   m_monotone = pop!(kwargs_dict, :m_monotone, 6)
   solver = R2Solver(reg_nlp, m_monotone = m_monotone)
   stats = RegularizedExecutionStats(reg_nlp)
-  solve!(solver, reg_nlp, stats; kwargs...)
+  solve!(solver, reg_nlp, stats; kwargs_dict...)
   return stats
 end
 
