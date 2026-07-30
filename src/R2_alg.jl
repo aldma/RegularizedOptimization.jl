@@ -19,9 +19,6 @@ mutable struct R2Solver{
   l_bound_m_x::S
   u_bound_m_x::S
   m_fh_hist::S
-  Fobj_hist::Vector{R}
-  Hobj_hist::Vector{R}
-  Complex_hist::Vector{Int}
 end
 
 function R2Solver(
@@ -32,7 +29,6 @@ function R2Solver(
   ψ = nothing,
   m_monotone::Int = 6,
 ) where {R <: Real, S <: AbstractVector{R}}
-  maxIter = options.maxIter
   xk = similar(x0)
   ∇fk = similar(x0)
   mν∇fk = similar(x0)
@@ -47,9 +43,6 @@ function R2Solver(
     u_bound_m_x = similar(xk, 0)
   end
   m_fh_hist = fill(T(-Inf), m_monotone - 1)
-  Fobj_hist = zeros(R, maxIter + 2)
-  Hobj_hist = zeros(R, maxIter + 2)
-  Complex_hist = zeros(Int, maxIter + 2)
   return R2Solver(
     xk,
     ∇fk,
@@ -63,15 +56,11 @@ function R2Solver(
     l_bound_m_x,
     u_bound_m_x,
     m_fh_hist,
-    Fobj_hist,
-    Hobj_hist,
-    Complex_hist,
   )
 end
 
 function R2Solver(
   reg_nlp::AbstractRegularizedNLPModel{T, V};
-  max_iter::Int = 10000,
   m_monotone::Int = 6,
 ) where {T, V}
   x0 = reg_nlp.model.meta.x0
@@ -94,9 +83,6 @@ function R2Solver(
     u_bound_m_x = similar(xk, 0)
   end
   m_fh_hist = fill(T(-Inf), m_monotone - 1)
-  Fobj_hist = zeros(T, max_iter + 2)
-  Hobj_hist = zeros(T, max_iter + 2)
-  Complex_hist = zeros(Int, max_iter + 2)
 
   ψ =
     has_bnds ? shifted(reg_nlp.h, xk, l_bound_m_x, u_bound_m_x, reg_nlp.selected) :
@@ -114,9 +100,6 @@ function R2Solver(
     l_bound_m_x,
     u_bound_m_x,
     m_fh_hist,
-    Fobj_hist,
-    Hobj_hist,
-    Complex_hist,
   )
 end
 
@@ -241,9 +224,6 @@ function R2(
     kwargs...,
   )
   outdict = Dict(
-    :Fhist => stats.solver_specific[:Fhist],
-    :Hhist => stats.solver_specific[:Hhist],
-    :Chist => stats.solver_specific[:SubsolverCounter],
     :NonSmooth => h,
     :status => stats.status,
     :fk => stats.solver_specific[:smooth_obj],
@@ -284,9 +264,6 @@ function R2(
     kwargs...,
   )
   outdict = Dict(
-    :Fhist => stats.solver_specific[:Fhist],
-    :Hhist => stats.solver_specific[:Hhist],
-    :Chist => stats.solver_specific[:SubsolverCounter],
     :NonSmooth => h,
     :status => stats.status,
     :fk => stats.solver_specific[:smooth_obj],
@@ -300,22 +277,9 @@ end
 function R2(reg_nlp::AbstractRegularizedNLPModel; kwargs...)
   kwargs_dict = Dict(kwargs...)
   m_monotone = pop!(kwargs_dict, :m_monotone, 6)
-  max_iter = pop!(kwargs_dict, :max_iter, 10000)
-  solver = R2Solver(reg_nlp, m_monotone = m_monotone, max_iter = max_iter)
-  stats = GenericExecutionStats(reg_nlp.model) # TODO: change this to `stats = RegularizedExecutionStats(reg_nlp)` when FHist etc. is ruled out.
-  cb = pop!(
-    kwargs_dict,
-    :callback,
-    (nlp, solver, stats) -> begin
-      solver.Fobj_hist[stats.iter + 1] = stats.solver_specific[:smooth_obj]
-      solver.Hobj_hist[stats.iter + 1] = stats.solver_specific[:nonsmooth_obj]
-      solver.Complex_hist[stats.iter + 1] += 1
-    end,
-  )
-  solve!(solver, reg_nlp, stats; callback = cb, max_iter = max_iter, kwargs...)
-  set_solver_specific!(stats, :Fhist, solver.Fobj_hist[1:(stats.iter + 1)])
-  set_solver_specific!(stats, :Hhist, solver.Hobj_hist[1:(stats.iter + 1)])
-  set_solver_specific!(stats, :SubsolverCounter, solver.Complex_hist[1:(stats.iter + 1)])
+  solver = R2Solver(reg_nlp, m_monotone = m_monotone)
+  stats = RegularizedExecutionStats(reg_nlp)
+  solve!(solver, reg_nlp, stats; kwargs...)
   return stats
 end
 
