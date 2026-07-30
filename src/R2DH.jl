@@ -151,6 +151,7 @@ function R2DH(
   kwargs...,
 ) where {T, V}
   kwargs_dict = Dict(kwargs...)
+  m_monotone = pop!(kwargs_dict, :m_monotone, 6)
   selected = pop!(kwargs_dict, :selected, 1:(nlp.meta.nvar))
   x0 = pop!(kwargs_dict, :x0, nlp.meta.x0)
   reg_nlp = RegularizedNLPModel(nlp, h, selected)
@@ -169,6 +170,7 @@ function R2DH(
     η2 = options.η2,
     γ = options.γ,
     θ = options.θ,
+    m_monotone = m_monotone,
     kwargs_dict...,
   )
 end

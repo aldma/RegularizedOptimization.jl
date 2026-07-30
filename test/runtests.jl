@@ -20,6 +20,7 @@ const global λ = norm(grad(bpdn, zeros(bpdn.meta.nvar)), Inf) / 10
 
 include("test_AL.jl")
 
+R2DHmo(nlp, h, options; kwargs...) = R2DH(nlp, h, options; m_monotone=1, kwargs...)
 NMPGnm(nlp, h, options; kwargs...) = NMPG(nlp, h, options; w_monotone=0.25, kwargs...)
 NMPGsp(nlp, h, options; kwargs...) = NMPGnm(nlp, h, options; spectral_stepsize=true, kwargs...)
 
@@ -124,9 +125,9 @@ for (mod, mod_name) ∈ (
   (LBFGSModel, "lbfgs"),
 )
   for (h, h_name) ∈ ((NormL0(λ), "l0"), (NormL1(λ), "l1"))
-    for solver_sym ∈ (:R2DH, :R2N, :R2N_R2DH, :NMPG, :NMPGnm, :NMPGsp)
+    for solver_sym ∈ (:R2DH, :R2DHmo, :R2N, :R2N_R2DH, :NMPG, :NMPGnm, :NMPGsp)
       solver_sym ∈ (:R2N, :R2N_R2DH) && mod_name ∈ ("spg", "psb") && continue
-      solver_sym == :R2DH && mod_name != "spg" && continue
+      solver_sym ∈ (:R2DH, :R2DHmo) && mod_name != "spg" && continue
       solver_sym == :R2N_R2DH && h_name == "l1" && continue # this test seems to fail because s seems to be equal to zeros within the subsolver
       solver_name = string(solver_sym)
       solver = eval(solver_sym)
