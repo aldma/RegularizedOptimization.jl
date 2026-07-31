@@ -142,5 +142,28 @@ for (mod, mod_name) ∈ (
   end
 end
 
+for (mod, mod_name) ∈ ((SpectralGradientModel, "spg"),)
+  for (h, h_name) ∈ ((NormL1(λ), "l1"),)
+    for solver_sym ∈ (:R2,:R2mono)
+      solver_name = string(solver_sym)
+      solver = eval(solver_sym)
+      @testset "bpdn-$(mod_name)-$(solver_name)-$(h_name)-callback" begin
+        x0 = zeros(bpdn.meta.nvar)
+        cb = (regnlp, solver, stats) -> begin
+          if stats.iter == 2
+            stats.status = :user
+          end
+        end
+        out = solver(mod(bpdn), h, options, x0 = x0, callback=cb)
+        @test typeof(out.solution) == typeof(bpdn.meta.x0)
+        @test length(out.solution) == bpdn.meta.nvar
+        @test typeof(out.dual_feas) == eltype(out.solution)
+        @test out.status == :user
+        @test out.iter == 2
+      end
+    end
+  end
+end
+
 include("test_bounds.jl")
 include("test_allocs.jl")
