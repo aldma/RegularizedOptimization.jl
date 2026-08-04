@@ -137,7 +137,7 @@ or
 - `η2::T = T(0.9)`: successful iteration threshold;
 - `γ::T = T(3)`: regularization parameter multiplier, σ := σ/γ when the iteration is very successful and σ := σγ when the iteration is unsuccessful.
 - `θ::T = 1/(1 + eps(T)^(1 / 5))`: is the model decrease fraction with respect to the decrease of the Cauchy model. 
-- `m_monotone::Int = 6`: monotoneness parameter. By default, R2DH is non-monotone but the monotone variant can be used with `m_monotone = 1`. Average-type nonmonotonicity is activated with `m_monotone = 0`.
+- `m_monotone::Int = 6`: monotonicity history parameter. By default, R2DH is non-monotone but the monotone variant can be used with `m_monotone = 1`. Average-type nonmonotonicity is activated with `m_monotone = 0`.
 - `compute_obj::Bool = true`: (advanced) whether `f(x₀)` should be computed or not. If set to false, then the value is retrieved from `stats.solver_specific[:smooth_obj]`;
 - `compute_grad::Bool = true`: (advanced) whether `∇f(x₀)` should be computed or not. If set to false, then the value is retrieved from `solver.∇fk`;
 
